@@ -1,0 +1,115 @@
+/* 一键插入隐私防护按钮 · L1 网页层样式
+   命名空间全部以 ps- 开头，避免污染宿主；不依赖任何宿主变量。 */
+:root {
+  --ps-bg: #121a28;
+  --ps-fg: #e8eef8;
+  --ps-sub: #9fb0c8;
+  --ps-line: #2b3a52;
+  --ps-gold: #ffd479;
+  --ps-warn: #ffb04a;
+  --ps-danger: #ff8a9c;
+}
+
+/* 悬浮球：小小一个，可拖动，位置记忆 */
+#psFab {
+  position: fixed; right: 20px; bottom: 20px; z-index: 2147483000;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .28);
+  background: linear-gradient(140deg, #2a3a56, #16202f);
+  color: var(--ps-gold); font-size: 19px; line-height: 1;
+  display: grid; place-items: center; cursor: grab;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+  user-select: none; -webkit-user-select: none; touch-action: none;
+  transition: box-shadow .18s, border-color .18s;
+}
+#psFab:hover { box-shadow: 0 8px 26px rgba(0, 0, 0, .6); border-color: var(--ps-gold); }
+#psFab:active { cursor: grabbing; }
+#psFab.ps-on { color: #0d1420; background: linear-gradient(140deg, var(--ps-gold), #e8a33d); }
+#psFab.ps-alert { animation: psPulse 1.4s ease-in-out infinite; }
+@keyframes psPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 138, 156, .5); } 50% { box-shadow: 0 0 0 9px rgba(255, 138, 156, 0); } }
+
+/* 悬浮球旁的状态点 */
+#psDot {
+  position: absolute; right: -2px; top: -2px; width: 10px; height: 10px;
+  border-radius: 50%; background: #6b7a90; border: 2px solid #16202f;
+}
+#psDot.on { background: #6ee7a0; }
+#psDot.risk { background: var(--ps-danger); }
+
+/* 一键遮蔽：全不透明，零内容泄漏 */
+#psShield {
+  position: fixed; inset: 0; z-index: 2147483640; display: none;
+  background: #0b1018;
+  background-image: radial-gradient(ellipse at 50% 40%, #16233a 0%, #0b1018 68%);
+  color: var(--ps-fg); align-items: center; justify-content: center;
+  font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+}
+#psShield.on { display: flex; }
+.ps-sh-inner { text-align: center; padding: 24px; max-width: 540px; }
+.ps-sh-ico { font-size: 44px; color: var(--ps-gold); margin-bottom: 14px; letter-spacing: 6px; }
+.ps-sh-t { font-size: 23px; font-weight: 800; letter-spacing: 2px; margin-bottom: 12px; }
+.ps-sh-s { font-size: 13px; color: var(--ps-sub); line-height: 1.9; margin-bottom: 20px; }
+.ps-sh-k { font-size: 11px; color: #6c7d95; margin-top: 16px; }
+.ps-sh-btn {
+  border: 1px solid var(--ps-gold); background: linear-gradient(135deg, var(--ps-gold), #e8a33d);
+  color: #241707; font-weight: 800; font-size: 13px; padding: 10px 26px;
+  border-radius: 10px; cursor: pointer;
+}
+
+/* 动态水印 */
+#psWatermark {
+  position: fixed; inset: 0; z-index: 2147483630; pointer-events: none;
+  background-repeat: repeat; opacity: .9; mix-blend-mode: screen; display: none;
+}
+
+/* 设置面板 */
+#psPanel {
+  position: fixed; right: 18px; bottom: 74px; z-index: 2147483620;
+  width: min(372px, calc(100vw - 28px)); max-height: min(84vh, 780px);
+  display: none; flex-direction: column; overflow: hidden;
+  background: var(--ps-bg); border: 1px solid var(--ps-line); border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .55); color: var(--ps-fg);
+  font: 12.5px/1.5 system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+}
+#psPanel.on { display: flex; }
+.ps-p-head { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid var(--ps-line); flex: 0 0 auto; }
+.ps-p-head b { font-size: 14px; }
+.ps-p-head button { background: none; border: 0; color: var(--ps-sub); font-size: 22px; line-height: 1; cursor: pointer; }
+.ps-p-body { padding: 6px 14px 14px; overflow: auto; }
+.ps-row { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); cursor: pointer; }
+.ps-row input[type=checkbox] { margin-top: 2px; accent-color: var(--ps-gold); flex: 0 0 auto; }
+.ps-row span { display: flex; flex-direction: column; gap: 2px; }
+.ps-row b { font-weight: 700; }
+.ps-row em { font-style: normal; font-size: 11px; color: #8fa1b9; line-height: 1.6; }
+.ps-mark { align-items: center; }
+.ps-mark input[type=text] {
+  flex: 1; min-width: 130px; background: #0d1420; border: 1px solid var(--ps-line);
+  color: var(--ps-fg); border-radius: 7px; padding: 6px 9px; font-size: 12px;
+}
+.ps-actions { display: flex; gap: 8px; margin: 12px 0 10px; }
+.ps-actions button { flex: 1; }
+.ps-btn {
+  border: 1px solid var(--ps-line); background: #1b2740; color: var(--ps-fg);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; cursor: pointer; font-weight: 700;
+}
+.ps-btn.primary { border-color: var(--ps-gold); background: linear-gradient(135deg, var(--ps-gold), #e8a33d); color: #241707; }
+.ps-status {
+  background: rgba(110, 231, 160, .07); border: 1px solid rgba(110, 231, 160, .3);
+  border-radius: 8px; padding: 8px 10px; font-size: 11px; color: #b9e6cd; line-height: 1.8;
+  margin-bottom: 10px;
+}
+.ps-status b { color: #6ee7a0; }
+.ps-warn {
+  background: rgba(255, 176, 74, .08); border: 1px solid rgba(255, 176, 74, .38);
+  border-radius: 9px; padding: 10px 12px; font-size: 11.5px; line-height: 1.75; color: #e6cba6;
+  margin-top: 10px;
+}
+.ps-warn b { color: var(--ps-warn); }
+.ps-warn table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 11px; }
+.ps-warn td { padding: 3px 4px; border-bottom: 1px solid rgba(255, 255, 255, .07); vertical-align: top; }
+.ps-warn td:first-child { white-space: nowrap; color: #ffd9a8; }
+
+@media (max-width: 480px) {
+  #psPanel { right: 10px; bottom: 70px; width: calc(100vw - 20px); }
+  .ps-sh-t { font-size: 19px; }
+}

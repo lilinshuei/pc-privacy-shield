@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>加密查看器 · __PS_VAULT_NAME__</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0 !important; padding: 0 !important; min-height: 100% !important;
+    background: #0d1420 !important; color: #e6eef9 !important;
+    font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif !important;
+  }
+  body { display: block !important; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 22px 70px; }
+  .badge { display: inline-block; padding: 4px 11px; border: 1px solid #3a5170; border-radius: 999px;
+           color: #ffd479; font-size: 12px; letter-spacing: .04em; background: #17233a; }
+  h1 { font-size: 23px; margin: 16px 0 6px; font-weight: 650; letter-spacing: .01em; }
+  .sub { color: #9fb0c8; font-size: 13px; margin: 0 0 22px; line-height: 1.7; }
+  .card { background: #152136; border: 1px solid #2b3a52; border-radius: 14px;
+          padding: 26px; box-shadow: 0 12px 38px rgba(0,0,0,.32); }
+  .field { display: flex; gap: 10px; flex-wrap: wrap; }
+  input[type=password], input[type=text] {
+    flex: 1 1 260px; min-width: 0; padding: 11px 14px; border-radius: 9px;
+    border: 1px solid #33486a; background: #0e1829; color: #e6eef9;
+    font: 15px/1.5 ui-monospace, Consolas, monospace; outline: none;
+  }
+  input[type=password]:focus, input[type=text]:focus { border-color: #ffd479; }
+  button {
+    padding: 11px 18px; border-radius: 9px; border: 1px solid #3b5171;
+    background: #1c2b45; color: #e6eef9; font-size: 14px; cursor: pointer;
+    font-family: inherit; transition: background .16s, border-color .16s;
+  }
+  button:hover:not(:disabled) { background: #26395a; border-color: #ffd479; }
+  button:disabled { opacity: .55; cursor: wait; }
+  button.primary { background: linear-gradient(140deg, #ffd479, #e8a33d); color: #101828;
+                   border-color: #ffd479; font-weight: 650; }
+  .msg { margin-top: 14px; font-size: 13px; min-height: 20px; color: #9fb0c8; line-height: 1.6; }
+  .msg.ok { color: #6ee7a0; } .msg.err { color: #ff8a9c; }
+  .boundary { margin-top: 22px; padding: 16px 18px; border-left: 3px solid #ffb04a;
+              background: #101a2b; border-radius: 0 9px 9px 0; }
+  .boundary b { color: #ffd479; font-size: 13px; }
+  .boundary ol { margin: 9px 0 0; padding-left: 20px; color: #9fb0c8; font-size: 12.5px; line-height: 1.85; }
+  header.bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+               padding: 14px 0 16px; border-bottom: 1px solid #2b3a52; margin-bottom: 18px; }
+  header.bar .name { font-weight: 650; font-size: 15px; margin-right: auto; }
+  header.bar .meta { color: #7f8fa6; font-size: 12px; }
+  pre#content {
+    white-space: pre-wrap; word-break: break-all; margin: 0; padding: 20px 22px;
+    background: #0e1829; border: 1px solid #2b3a52; border-radius: 11px;
+    font: 13.5px/1.85 ui-monospace, Consolas, "Microsoft YaHei", monospace;
+    color: #dce7f7; min-height: 180px; outline: none;
+    max-height: calc(100vh - 230px); overflow: auto;
+  }
+  pre#content.blurred { filter: blur(9px); user-select: none; pointer-events: none; }
+  footer.note { margin-top: 18px; color: #7f8fa6; font-size: 12px; line-height: 1.8; }
+  #toast {
+    position: fixed; left: 50%; top: 18px; transform: translateX(-50%) translateY(-14px);
+    background: #1c2b45; border: 1px solid #3b5171; color: #e6eef9;
+    padding: 10px 18px; border-radius: 9px; font-size: 13px; opacity: 0;
+    pointer-events: none; transition: opacity .2s, transform .2s; z-index: 9000;
+    box-shadow: 0 8px 26px rgba(0,0,0,.4);
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { border-color: #ff8a9c; color: #ffb6c2; }
+</style>
+</head>
+<body>
+<div id="toast" role="status"></div>
+
+<div class="wrap" id="lock">
+  <div class="card">
+    <span class="badge">L4 · 本地加密文件</span>
+    <h1>加密查看器</h1>
+    <p class="sub">__PS_VAULT_NAME__ &nbsp;·&nbsp; __PS_VAULT_BYTES__ 字节 &nbsp;·&nbsp; 生成于 __PS_VAULT_DATE__<br>
+      内容在本页内存中解密，不上传、不写入浏览器本地存储、不产生任何明文文件。</p>
+    <form id="unlockForm" autocomplete="off">
+      <div class="field">
+        <input type="password" id="pass" placeholder="输入口令" autocomplete="off" spellcheck="false" required>
+        <button type="button" id="btnTogglePass">显示</button>
+        <button type="submit" class="primary" id="btnUnlock">解锁</button>
+      </div>
+    </form>
+    <div class="msg" id="msg"></div>
+    <div class="boundary">
+      <b>能力边界（如实说明，不夸大）</b>
+      <ol>
+        <li>解锁后的明文存在于内存与页面 DOM 中，浏览器开发者工具可见；本工具无法对已控制本机的人隐藏数据。</li>
+        <li>右下角悬浮球只负责<strong>把屏幕盖住</strong>，挡不住系统级远控截屏 / 录屏；真防需要 L2 桌面层的 setContentProtection。</li>
+        <li>口令丢失无法恢复，本工具没有后门；密文可以安全备份，但磁盘上的<strong>明文原件</strong>需另行处置，否则加密不产生保护效果。</li>
+        <li>不防键盘记录、不防已入侵本机、不防云同步把明文原件同步到别处。</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="view" hidden>
+  <header class="bar">
+    <span class="name">__PS_VAULT_NAME__</span>
+    <span class="meta">内存中解密 · 空闲 5 分钟自动锁定</span>
+    <button id="btnCopy">复制全部</button>
+    <button id="btnHide">隐藏内容</button>
+    <button id="btnLock" class="primary">立即锁定</button>
+  </header>
+  <pre id="content" tabindex="0"></pre>
+  <footer class="note">
+    遮蔽请使用右下角悬浮球（或 Ctrl+Alt+H，Esc 恢复）；切到其他窗口时护盾会自动遮蔽。
+    明文不写入浏览器本地存储、不发起任何网络请求、不生成下载文件。锁定会清空 DOM 与内存中的明文。
+  </footer>
+</div>
+
+<script type="application/json" id="vaultBlob">__PS_VAULT_BLOB__</script>
+<script>
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  var blob;
+  try { blob = JSON.parse($('vaultBlob').textContent); }
+  catch (e) { $('msg').textContent = '密文数据损坏，无法解析。'; $('msg').className = 'msg err'; return; }
+
+  var plain = '', idleTimer = null, IDLE_MS = 5 * 60 * 1000;
+  function setMsg(t, kind) { $('msg').textContent = t; $('msg').className = 'msg ' + (kind || ''); }
+  function toast(t, kind) {
+    var el = $('toast'); el.textContent = t; el.className = 'on ' + (kind || '');
+    setTimeout(function () { el.className = ''; }, 3400);
+  }
+  function b64(s) {
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function derive(pass, salt, iter) {
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']).then(function (km) {
+      return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: salt, iterations: iter, hash: 'SHA-256' },
+        km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    });
+  }
+  function decrypt(pass) {
+    if (!(window.crypto && crypto.subtle)) return Promise.reject(new Error('NO_WEBCRYPTO'));
+    return derive(pass, b64(blob.salt), blob.iter).then(function (key) {
+      return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(blob.iv) }, key, b64(blob.data));
+    }).then(function (buf) { return new TextDecoder().decode(buf); });
+  }
+  function resetIdle() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { lock('空闲 5 分钟，已自动锁定'); }, IDLE_MS);
+  }
+  function lock(reason) {
+    plain = '';
+    $('content').textContent = '';
+    $('content').classList.remove('blurred');
+    $('btnHide').textContent = '隐藏内容';
+    $('pass').value = '';
+    $('view').hidden = true;
+    $('lock').hidden = false;
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    setMsg(reason || '已锁定，DOM 与内存中的明文已清除。', 'ok');
+  }
+  function show(text) {
+    plain = text;
+    $('content').textContent = text;
+    $('lock').hidden = true;
+    $('view').hidden = false;
+    setMsg('', '');
+    resetIdle();
+  }
+
+  $('unlockForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var pass = $('pass').value;
+    if (!pass) { setMsg('请输入口令。', 'err'); return; }
+    var btn = $('btnUnlock');
+    btn.disabled = true;
+    setMsg('正在解密…（PBKDF2 60 万次迭代，约 1 秒）', '');
+    decrypt(pass).then(function (text) {
+      btn.disabled = false;
+      show(text);
+    }).catch(function (err) {
+      btn.disabled = false;
+      $('pass').value = '';
+      if (err && err.message === 'NO_WEBCRYPTO') {
+        setMsg('WebCrypto 不可用：请用新版 Edge / Chrome 打开本文件。', 'err');
+      } else {
+        setMsg('口令错误，或密文已损坏。', 'err');
+      }
+    });
+  });
+
+  $('btnTogglePass').addEventListener('click', function () {
+    var p = $('pass');
+    p.type = p.type === 'password' ? 'text' : 'password';
+    this.textContent = p.type === 'password' ? '显示' : '隐藏';
+  });
+  $('btnLock').addEventListener('click', function () { lock(); });
+  $('btnHide').addEventListener('click', function () {
+    var c = $('content');
+    c.classList.toggle('blurred');
+    this.textContent = c.classList.contains('blurred') ? '显示内容' : '隐藏内容';
+  });
+  $('btnCopy').addEventListener('click', function () {
+    if (!plain) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(plain).then(function () {
+        toast('已复制到剪贴板（剪贴板内容不受本工具保护）');
+      }, function () {
+        toast('复制失败：浏览器限制了 file:// 页面的剪贴板权限', 'err');
+      });
+    } else {
+      toast('此环境不支持剪贴板 API', 'err');
+    }
+  });
+  ['pointerdown', 'keydown', 'scroll'].forEach(function (ev) {
+    document.addEventListener(ev, function () { if (!$('view').hidden) resetIdle(); }, { passive: true });
+  });
+
+  if (!(window.crypto && crypto.subtle)) {
+    setMsg('WebCrypto 不可用：当前环境无法解密，请用新版 Edge / Chrome 打开。', 'err');
+    $('btnUnlock').disabled = true;
+  } else {
+    setMsg('环境就绪：WebCrypto 可用 · 全程离线 · 无网络请求', 'ok');
+  }
+})();
+</script>
+</body>
+</html>

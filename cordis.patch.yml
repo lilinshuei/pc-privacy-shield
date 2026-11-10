@@ -1,0 +1,11 @@
+# ===========================================================================
+# pc-privacy-shield — DSH bundle patch
+# ===========================================================================
+# 安装：
+#   dsh plugin --profile web add github:lilinshuei/pc-privacy-shield
+#   dsh plugin --profile desktop add github:lilinshuei/pc-privacy-shield
+# ===========================================================================
+
+- insert:
+    - id: pc-privacy-shield
+      name: pc-privacy-shield
